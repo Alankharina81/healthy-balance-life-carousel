@@ -1,58 +1,22 @@
-const defaults = [
-  {title:"Kenapa tidur penting?",body:"Saat tidur, tubuh menjalankan proses pemulihan. Tidur yang cukup membantu mendukung konsentrasi, suasana hati, dan kesehatan secara menyeluruh.",symbol:"☾"},
-  {title:"Dampaknya bukan cuma rasa kantuk",body:"Kurang tidur dapat memengaruhi energi, nafsu makan, fokus, dan kemampuan tubuh mengelola stres. Efeknya bisa terasa sepanjang hari.",symbol:"✳"},
-  {title:"Bangun rutinitas yang realistis",body:"Coba tidur dan bangun pada jam yang relatif sama. Kurangi kafein menjelang malam dan buat suasana kamar lebih nyaman.",symbol:"⌂"},
-  {title:"Mulai dari satu kebiasaan kecil",body:"Redupkan lampu, jauhkan ponsel sebelum tidur, dan lakukan aktivitas menenangkan. Pilih kebiasaan yang paling mungkin kamu pertahankan.",symbol:"♡"},
-  {title:"Tubuhmu layak mendapat istirahat",body:"Tidak perlu mengubah semuanya sekaligus. Mulai dengan langkah kecil dan konsisten. Simpan konten ini sebagai pengingat.",symbol:"✦"}
+const defaults=[
+{body:"Perimenopause adalah masa transisi menuju **menopause**.\n\nJadi, kamu **belum** menopause.\n\nTapi ovarium dan hormon reproduksi mulai mengalami perubahan.\n\nDan perubahan ini bisa terjadi bertahap, bukan tiba-tiba.\n\n*Menopause* sendiri baru dikatakan terjadi setelah 12 bulan berturut-turut tidak mengalami menstruasi."},
+{body:"Perubahan hormon bisa membuat siklus menstruasi mulai berbeda.\n\nMenstruasi mungkin menjadi lebih pendek, lebih panjang, atau tidak teratur.\n\nSetiap perempuan bisa mengalami perjalanan yang berbeda."},
+{body:"Beberapa perubahan yang mungkin terasa:\n\n**Hot flashes**, tidur terganggu, perubahan suasana hati, atau konsentrasi yang terasa menurun.\n\nTidak semua orang mengalami gejala yang sama."},
+{body:"Perimenopause bukan berarti tubuhmu rusak.\n\nIni adalah fase biologis yang perlu dipahami, bukan ditakuti.\n\nCatat perubahan yang kamu alami dan cari dukungan yang tepat."}
 ];
-const $ = s => document.querySelector(s);
-const topic = $("#topic"), introText = $("#introText"), fields = $("#fields"), canvas = $("#canvas"), thumbs = $("#thumbs");
-let slides = defaults.map(x => ({...x})), active = 0;
-const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-function renderFields(){
-  fields.innerHTML = slides.map((s,i)=>'<div class="slide-field"><strong>SLIDE '+(i+2)+'</strong><label>Judul</label><input data-i="'+i+'" data-k="title" maxlength="70" value="'+esc(s.title)+'"><label>Isi edukasi</label><textarea data-i="'+i+'" data-k="body" maxlength="250">'+esc(s.body)+'</textarea></div>').join("");
-}
-function renderThumbs(){
-  thumbs.innerHTML = Array.from({length:5},(_,i)=>'<button type="button" data-slide="'+i+'" class="'+(i===active?"active":"")+'">Slide '+(i+1)+'</button>').join("");
-  thumbs.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{active=Number(b.dataset.slide);render();}));
-}
-function render(){
-  const n=String(active+1).padStart(2,"0");
-  $("#count").textContent=n+" / 05";
-  thumbs.querySelectorAll("button").forEach((b,i)=>b.classList.toggle("active",i===active));
-  const top='<div class="slide-top"><span>HEALTHY BALANCE LIFE</span><span>'+n+' / 05</span></div>';
-  const bottom='<div class="slide-bottom"><span>EDUKASI • WELLNESS • 35+</span><span>COACH KHARINA</span></div>';
-  if(active===0){
-    canvas.innerHTML=top+'<div class="cover-body"><span class="tag">WELLNESS NOTES</span><h2>'+esc(topic.value||"Topik Carousel")+'</h2><p>'+esc(introText.value||"Tambahkan pengantar singkat.")+'</p><div class="art" aria-hidden="true"><span class="moon">☾</span><span class="spark">✳</span><span class="z">Z<span>z</span></span><div class="horizon"></div></div><span class="swipe">GESER UNTUK MEMBACA →</span></div>'+bottom;
-  } else {
-    const s=slides[active-1];
-    canvas.innerHTML=top+'<div class="detail-body"><span class="index">INSIGHT 0'+active+'</span><h2>'+esc(s.title)+'</h2><p>'+esc(s.body)+'</p><div class="symbol" aria-hidden="true">'+esc(s.symbol)+'</div>'+(active===4?'<div class="callout">Simpan • Bagikan • Mulai dari langkah kecil hari ini.</div>':"")+'</div>'+bottom;
-  }
-}
-fields.addEventListener("input",e=>{
-  const t=e.target;if(!t.dataset.k)return;
-  slides[Number(t.dataset.i)][t.dataset.k]=t.value;render();
-});
-topic.addEventListener("input",render);introText.addEventListener("input",render);
-$("#prev").addEventListener("click",()=>{active=(active+4)%5;render();});
-$("#next").addEventListener("click",()=>{active=(active+1)%5;render();});
-$("#reset").addEventListener("click",()=>{
-  topic.value="Tidur Berkualitas";
-  introText.value="Tidur bukan sekadar waktu istirahat. Tubuh menggunakan waktu ini untuk memulihkan diri dan menjaga berbagai fungsi penting.";
-  slides=defaults.map(x=>({...x}));active=0;renderFields();renderThumbs();render();
-});
-$("#download").addEventListener("click",async()=>{
-  if(!window.htmlToImage){alert("Library ekspor tidak termuat. Periksa koneksi internet, lalu muat ulang.");return;}
-  const btn=$("#download"),original=active;btn.disabled=true;btn.textContent="Menyiapkan...";
-  try{
-    for(let i=0;i<5;i++){
-      active=i;render();
-      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-      const png=await htmlToImage.toPng(canvas,{pixelRatio:1080/canvas.offsetWidth,cacheBust:true});
-      const a=document.createElement("a");a.download="healthy-balance-life-slide-"+String(i+1).padStart(2,"0")+".png";a.href=png;a.click();
-      await new Promise(resolve=>setTimeout(resolve,250));
-    }
-  }catch(err){console.error(err);alert("Ekspor gagal. Coba lagi menggunakan browser desktop.");}
-  finally{active=original;render();btn.disabled=false;btn.textContent="Unduh 5 slide PNG";}
-});
-renderFields();renderThumbs();render();
+const $=s=>document.querySelector(s),canvas=$("#canvas"),fields=$("#slideFields"),thumbs=$("#thumbs");let slides=defaults.map(x=>({...x})),active=0,bg="";
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function rich(s){return s.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).map(t=>t.startsWith("**")&&t.endsWith("**")?"<strong>"+esc(t.slice(2,-2))+"</strong>":t.startsWith("*")&&t.endsWith("*")?"<em>"+esc(t.slice(1,-1))+"</em>":esc(t)).join("");}
+function fieldsRender(){fields.innerHTML=slides.map((s,i)=>'<div class="slide-field"><div class="slide-field-head">SLIDE '+(i+2)+' · BODY COPY</div><label>Paragraf (pisahkan dengan baris kosong)</label><textarea data-index="'+i+'" maxlength="1400">'+esc(s.body)+'</textarea></div>').join("");}
+function thumbsRender(){thumbs.innerHTML=Array.from({length:5},(_,i)=>'<button type="button" class="thumb '+(i===active?"active":"")+'" data-slide="'+i+'">Slide '+(i+1)+'</button>').join("");thumbs.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{active=Number(b.dataset.slide);render();}));}
+function setBg(){canvas.style.backgroundImage=bg?'linear-gradient(90deg,#050505dd 0%,#0505057a 65%,#05050525 100%),linear-gradient(0deg,#000000b8 0%,transparent 55%,#00000025 100%),url("'+bg+'")':'linear-gradient(115deg,#080808ef 0%,#111111b8 46%,#1010105c 100%),radial-gradient(ellipse at 72% 26%,#777 0%,#353535 35%,#0b0b0b 80%)';}
+function render(){const n=String(active+1).padStart(2,"0");$("#counter").textContent=n+" / 05";thumbs.querySelectorAll("button").forEach((b,i)=>b.classList.toggle("active",i===active));canvas.dataset.slide=active+1;setBg();const top='<div class="photo-overlay"></div><div class="slide-top"><span>HEALTHY BALANCE LIFE</span><span>'+n+' / 05</span></div>',bottom='<div class="slide-bottom"><span>WELLNESS EDUCATION · 35+</span><span>'+(active===0?"GESER →":"COACH KHARINA")+'</span></div>';
+if(active===0){let t=esc($("#coverTitle").value).replace(/\n/g,"<br>"),a=$("#coverAccent").value.trim();if(a){let low=t.toLowerCase(),needle=esc(a).toLowerCase(),pos=low.indexOf(needle);if(pos>=0)t=t.slice(0,pos)+"<span>"+t.slice(pos,pos+a.length)+"</span>"+t.slice(pos+a.length);}canvas.innerHTML=top+'<div class="cover-copy"><h2>'+t+'</h2><p>'+esc($("#coverSubtitle").value).replace(/\n/g,"<br>")+'</p></div>'+bottom;}
+else{let p=slides[active-1].body.split(/\n\s*\n/).filter(Boolean).map(t=>"<p>"+rich(t.replace(/\n/g,"<br>"))+"</p>").join("");canvas.innerHTML=top+'<div class="content-copy">'+p+'</div>'+bottom;canvas.querySelector(".content-copy").style.fontSize=(Number($("#fontScale").value)/100*100)+"%";}}
+fields.addEventListener("input",e=>{if(e.target.dataset.index===undefined)return;slides[Number(e.target.dataset.index)].body=e.target.value;render();});
+["coverTitle","coverAccent","coverSubtitle","fontScale"].forEach(id=>$("#"+id).addEventListener("input",render));
+$("#prevBtn").addEventListener("click",()=>{active=(active+4)%5;render();});$("#nextBtn").addEventListener("click",()=>{active=(active+1)%5;render();});
+$("#photoInput").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;if(bg.startsWith("blob:"))URL.revokeObjectURL(bg);bg=URL.createObjectURL(f);render();});
+$("#resetBtn").addEventListener("click",()=>{$("#coverTitle").value="SEBENARNYA\nPERIMENOPAUSE\nITU APA SIH?";$("#coverAccent").value="PERIMENOPAUSE";$("#coverSubtitle").value="Dan kenapa usia 40-an tubuh kita tiba-tiba terasa “kok beda banget?”";$("#fontScale").value=100;slides=defaults.map(x=>({...x}));active=0;fieldsRender();thumbsRender();render();});
+$("#downloadBtn").addEventListener("click",async()=>{if(!window.htmlToImage){alert("Library PNG belum termuat. Periksa koneksi dan refresh halaman.");return;}const btn=$("#downloadBtn"),old=active;btn.disabled=true;btn.textContent="Menyiapkan...";try{for(let i=0;i<5;i++){active=i;render();await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const png=await htmlToImage.toPng(canvas,{pixelRatio:1080/canvas.offsetWidth,cacheBust:true});const a=document.createElement("a");a.href=png;a.download="hbl-carousel-slide-"+(i+1)+".png";a.click();await new Promise(r=>setTimeout(r,280));}}catch(err){console.error(err);alert("PNG gagal dibuat. Coba browser desktop atau refresh.");}finally{active=old;render();btn.disabled=false;btn.textContent="Unduh slide PNG";}});
+fieldsRender();thumbsRender();render();
